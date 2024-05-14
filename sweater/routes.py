@@ -33,34 +33,40 @@ def change_task():
 def edit_task(task_id):
     task = Task.query.get(task_id)
 
+    new_name = request.form.get('name')
+    new_description = request.form.get('description')
+    new_deadline = request.form.get('deadline')
+
     workers = User.query.filter_by(role='worker').all()
+    user_ids = request.form.getlist('user_ids')
 
-    if task:
-        if request.method == 'POST':
-            user_ids = request.form.getlist('user_ids')
-            change_user_tasks(user_ids, task_id)
+    if request.method == 'POST':
+        if not new_name.strip():
+            flash('Название не может быть пустым')
+        elif not new_description.strip():
+            flash('Описание не может быть пустым')
+        elif len(user_ids) == 0:
+            flash('У задания должны быть исполнители')
+        elif datetime.strptime(new_deadline, '%Y-%m-%dT%H:%M') <= datetime.now().replace(microsecond=0):
+            flash('Дедлайн не может быть таким')
+        elif not new_deadline.strip():
+            flash('Дедлайн не может быть пустым')
+        else:
+            UsersTask.query.filter_by(task_id=task_id).delete()
 
-            task.name = request.form.get('name')
-            task.description = request.form.get('description')
+            for user_id in user_ids:
+                new_user_task = UsersTask(user_id=user_id, task_id=task_id)
+                db.session.add(new_user_task)
+
+            task.name = new_name
+            task.description = new_description
             task.start_date = datetime.now().replace(microsecond=0)
-            task.deadline = request.form.get('deadline')
+            task.deadline = new_deadline
             task.category_id = request.form.get('category_id')
             db.session.commit()
             return redirect(url_for('all_history'))
-        else:
-            return render_template('edit_task.html', task=task, users=workers)
-    else:
-        return redirect(url_for('all_history'))
 
-
-def change_user_tasks(user_ids, task_id):
-    UsersTask.query.filter_by(task_id=task_id).delete()
-
-    for user_id in user_ids:
-        new_user_task = UsersTask(user_id=user_id, task_id=task_id)
-        db.session.add(new_user_task)
-
-    db.session.commit()
+    return render_template('edit_task.html', task=task, users=workers)
 
 
 @app.route("/create_task", methods=['POST', 'GET'])
@@ -74,33 +80,33 @@ def create_task():
     category_id = request.form.get('category_id')
 
     workers = User.query.filter_by(role='worker').all()
+    user_ids = request.form.getlist('user_ids')
 
     if request.method == 'POST':
         if not name.strip():
             flash('Название не может быть пустым')
-        elif not description.strip():
-            flash('Описание не может быть пустым')
         elif not deadline.strip():
             flash('Дедлайн не может быть пустым')
+        elif datetime.strptime(deadline, '%Y-%m-%dT%H:%M') <= datetime.now().replace(microsecond=0):
+            flash('Дедлайн не может быть таким')
+        elif len(user_ids) == 0:
+            flash('У задания должны быть исполнители')
+        elif not description.strip():
+            flash('Описание не может быть пустым')
         else:
             new_task = Task(name=name, description=description, start_date=start_date, deadline=deadline, status=status,
                             category_id=category_id)
             db.session.add(new_task)
             db.session.commit()
 
-            user_ids = request.form.getlist('user_ids')
-            add_user_tasks(user_ids, new_task.task_id)
+            for user_id in user_ids:
+                new_user_task = UsersTask(user_id=int(user_id), task_id=new_task.task_id)
+                db.session.add(new_user_task)
+            db.session.commit()
 
             return redirect(url_for('all_history'))
 
     return render_template('create_task.html', users=workers)
-
-
-def add_user_tasks(user_ids, task_id):
-    for user_id in user_ids:
-        new_user_task = UsersTask(user_id=int(user_id), task_id=task_id)
-        db.session.add(new_user_task)
-        db.session.commit()
 
 
 @app.route("/tasks")
