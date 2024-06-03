@@ -45,12 +45,15 @@
 
                 <input class="form-control form-group" type="text" name="description" placeholder="Введите описание задачи"><br>
 
-                <input class="form-control" type="text" id="selectedUsers" placeholder="Выберите работника(ов) снизу" readonly>
-                <select class="form-control kelly-slab-regular form-group" multiple name="user_ids" id="userSelect">
+                <p>Выберите работников:</p>
+                <div id="userCheckboxes" class="form-group">
                     {% for user in users %}
-                        <option value="{{ user.user_id }}">{{ user.login }}</option>
+                        <div>
+                            <input type="checkbox" id="user_{{ user.user_id }}" name="user_ids" value="{{ user.user_id }}" class="user-checkbox">
+                            <label for="user_{{ user.user_id }}">{{ user.login }}</label>
+                        </div>
                     {% endfor %}
-                </select><br>
+                </div>
 
                 <p>Выберите дедлайн: <br><input class="form-control form-group" type="datetime-local" name="deadline"><br></p>
 
@@ -84,13 +87,6 @@
             {% endif %}
         {% endwith %}
     </main>
-
-    <script>
-        document.getElementById('userSelect').addEventListener('change', function() {
-            var selectedUsers = Array.from(this.selectedOptions).map(option => option.text);
-            document.getElementById('selectedUsers').value = selectedUsers.join(' ');
-        });
-    </script>
 
 </body>
 </html>

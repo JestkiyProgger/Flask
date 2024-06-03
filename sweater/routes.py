@@ -17,7 +17,7 @@ def home():
 @app.route("/all_history")
 @login_required
 def all_history():
-    all_tasks = Task.query.all()
+    all_tasks = Task.query.order_by(Task.status).order_by(Task.deadline).all()
     return render_template('all_history.html', tasks=all_tasks)
 
 
@@ -114,6 +114,7 @@ def create_task():
 def tasks():
     user_tasks = current_user.users_tasks
     in_progress_tasks = [user_task.task for user_task in user_tasks if user_task.task.status == 'В процессе']
+    in_progress_tasks.sort(key=lambda task: task.deadline)
     return render_template('tasks.html', tasks=in_progress_tasks)
 
 
@@ -136,6 +137,7 @@ def history():
     user_tasks = current_user.users_tasks
     two_status_tasks = [user_task.task for user_task in user_tasks if user_task.task.status == 'Выполнено' or
                         user_task.task.status == 'Невыполнено']
+    two_status_tasks.sort(key=lambda task: (task.status != 'Невыполнено', task.status))
     return render_template('history.html', tasks=two_status_tasks)
 
 
@@ -216,6 +218,7 @@ def registration():
             return redirect(url_for('login_page'))
 
     return render_template('registration.html')
+
 
 @app.route("/error")
 def error():
