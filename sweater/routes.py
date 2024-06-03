@@ -143,6 +143,7 @@ def history():
 @login_required
 def user_stat():
     users = User.query.filter_by(role='worker').all()
+    print(users)
     user_stats = []
 
     for user in users:
@@ -215,3 +216,7 @@ def registration():
             return redirect(url_for('login_page'))
 
     return render_template('registration.html')
+
+@app.route("/error")
+def error():
+    return render_template('error.html')

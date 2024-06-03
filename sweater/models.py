@@ -49,6 +49,9 @@ class User(db.Model, UserMixin):
             task.task.category.complexity for task in self.users_tasks if task.task.status == 'Невыполнено')
         return completed_tasks - failed_tasks
 
+    def __str__(self):
+        return self.user_id + self.login
+
 
 class UsersTask(db.Model):
     __tablename__ = 'UsersTask'
